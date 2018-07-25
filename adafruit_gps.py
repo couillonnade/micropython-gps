@@ -26,7 +26,7 @@
 GPS parsing module.  Can parse simple NMEA data sentences from serial GPS
 modules to read latitude, longitude, and more.
 
-* Author(s): Tony DiCola
+* Author(s): Tony DiCola, Alexandre Marquet.
 
 Implementation Notes
 --------------------
@@ -38,14 +38,12 @@ Implementation Notes
 
 **Software and Dependencies:**
 
-* Adafruit CircuitPython firmware for the ESP8622 and M0-based boards:
-  https://github.com/adafruit/circuitpython/releases
+* MicroPython:
+    https://github.com/micropython/micropython
 
 """
-import time
-
 __version__ = "0.0.0-auto.0"
-__repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_GPS.git"
+__repo__ = "https://github.com/alexmrqt/Adafruit_CircuitPython_GPS.git"
 
 # Internal helper parsing functions.
 # These handle input that might be none or null and return none instead of
@@ -169,12 +167,11 @@ class GPS:
             secs = time_utc % 100
             # Set or update time to a friendly python time struct.
             if self.timestamp_utc is not None:
-                self.timestamp_utc = time.struct_time((
-                    self.timestamp_utc.tm_year, self.timestamp_utc.tm_mon,
-                    self.timestamp_utc.tm_mday, hours, mins, secs, 0, 0, -1))
+                self.timestamp_utc = (
+                    self.timestamp_utc[0], self.timestamp_utc[1],
+                    self.timestamp_utc[2], hours, mins, secs, 0, 0)
             else:
-                self.timestamp_utc = time.struct_time((0, 0, 0, hours, mins,
-                                                       secs, 0, 0, -1))
+                self.timestamp_utc = (0, 0, 0, hours, mins, secs, 0, 0)
         # Parse latitude and longitude.
         self.latitude = _parse_degrees(data[1])
         if self.latitude is not None and \
@@ -205,12 +202,11 @@ class GPS:
             secs = time_utc % 100
             # Set or update time to a friendly python time struct.
             if self.timestamp_utc is not None:
-                self.timestamp_utc = time.struct_time((
-                    self.timestamp_utc.tm_year, self.timestamp_utc.tm_mon,
-                    self.timestamp_utc.tm_mday, hours, mins, secs, 0, 0, -1))
+                self.timestamp_utc = (
+                    self.timestamp_utc[0], self.timestamp_utc[1],
+                    self.timestamp_utc[2], hours, mins, secs, 0, 0)
             else:
-                self.timestamp_utc = time.struct_time((0, 0, 0, hours, mins,
-                                                       secs, 0, 0, -1))
+                self.timestamp_utc = (0, 0, 0, hours, mins, secs, 0, 0)
         # Parse status (active/fixed or void).
         status = data[1]
         self.fix_quality = 0
@@ -237,15 +233,12 @@ class GPS:
                                              # spec and not this code.
             if self.timestamp_utc is not None:
                 # Replace the timestamp with an updated one.
-                # (struct_time is immutable and can't be changed in place)
-                self.timestamp_utc = time.struct_time((year, month, day,
-                                                       self.timestamp_utc.tm_hour,
-                                                       self.timestamp_utc.tm_min,
-                                                       self.timestamp_utc.tm_sec,
+                self.timestamp_utc = (year, month, day,
+                                                       self.timestamp_utc[3],
+                                                       self.timestamp_utc[4],
+                                                       self.timestamp_utc[5],
                                                        0,
-                                                       0,
-                                                       -1))
+                                                       0)
             else:
                 # Time hasn't been set so create it.
-                self.timestamp_utc = time.struct_time((year, month, day, 0, 0,
-                                                       0, 0, 0, -1))
+                self.timestamp_utc = (year, month, day, 0, 0, 0, 0, 0)

@@ -1,22 +1,13 @@
 # Simple GPS module demonstration.
 # Will wait for a fix and print a message every second with the current location
 # and other details.
-import time
-import board
-import busio
+from machine import UART
+import utime as time
 
 import adafruit_gps
 
-
-# Define RX and TX pins for the board's serial port connected to the GPS.
-# These are the defaults you should use for the GPS FeatherWing.
-# For other boards set RX = GPS module TX, and TX = GPS module RX pins.
-RX = board.RX
-TX = board.TX
-
-# Create a serial connection for the GPS connection using default speed and
-# a slightly higher timeout (GPS modules typically update once a second).
-uart = busio.UART(TX, RX, baudrate=9600, timeout=3000)
+# Create a GPS module instance.
+uart = UART(1, baudrate=9600, timeout_chars=28800000, pins=('P8','P2'))
 
 # Create a GPS module instance.
 gps = adafruit_gps.GPS(uart)
@@ -46,17 +37,19 @@ gps.send_command('PMTK220,1000')
 #gps.send_command('PMTK220,500')
 
 # Main loop runs forever printing the location, etc. every second.
-last_print = time.monotonic()
+last_print = time.ticks_ms()
 while True:
     # Make sure to call gps.update() every loop iteration and at least twice
     # as fast as data comes from the GPS unit (usually every second).
     # This returns a bool that's true if it parsed new data (you can ignore it
     # though if you don't care and instead look at the has_fix property).
-    gps.update()
+    # gps.update()
     # Every second print out current location details if there's a fix.
-    current = time.monotonic()
-    if current - last_print >= 1.0:
+    current = time.ticks_ms()
+    if time.ticks_diff(last_print, current) >= 1000:
         last_print = current
+
+        gps.update()
         if not gps.has_fix:
             # Try again if we don't have a fix yet.
             print('Waiting for fix...')
