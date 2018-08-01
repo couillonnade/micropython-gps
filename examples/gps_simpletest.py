@@ -7,7 +7,7 @@ import utime as time
 import adafruit_gps
 
 # Create a GPS module instance.
-uart = UART(1, baudrate=9600, timeout_chars=28800000, pins=('P8','P2'))
+uart = UART(1, baudrate=9600, timeout_chars=3000, pins=('P8','P2'))
 
 # Create a GPS module instance.
 gps = adafruit_gps.GPS(uart)
@@ -43,13 +43,12 @@ while True:
     # as fast as data comes from the GPS unit (usually every second).
     # This returns a bool that's true if it parsed new data (you can ignore it
     # though if you don't care and instead look at the has_fix property).
-    # gps.update()
+    gps.update()
     # Every second print out current location details if there's a fix.
     current = time.ticks_ms()
     if time.ticks_diff(last_print, current) >= 1000:
         last_print = current
 
-        gps.update()
         if not gps.has_fix:
             # Try again if we don't have a fix yet.
             print('Waiting for fix...')
@@ -58,12 +57,12 @@ while True:
         # Print out details about the fix like location, date, etc.
         print('=' * 40)  # Print a separator line.
         print('Fix timestamp: {}/{}/{} {:02}:{:02}:{:02}'.format(
-            gps.timestamp_utc.tm_mon,   # Grab parts of the time from the
-            gps.timestamp_utc.tm_mday,  # struct_time object that holds
-            gps.timestamp_utc.tm_year,  # the fix time.  Note you might
-            gps.timestamp_utc.tm_hour,  # not get all data like year, day,
-            gps.timestamp_utc.tm_min,   # month!
-            gps.timestamp_utc.tm_sec))
+            gps.timestamp_utc[1],   # Grab parts of the time from the
+            gps.timestamp_utc[2],  # struct_time object that holds
+            gps.timestamp_utc[0],  # the fix time.  Note you might
+            gps.timestamp_utc[3],  # not get all data like year, day,
+            gps.timestamp_utc[4],   # month!
+            gps.timestamp_utc[5]))
         print('Latitude: {} degrees'.format(gps.latitude))
         print('Longitude: {} degrees'.format(gps.longitude))
         print('Fix quality: {}'.format(gps.fix_quality))
