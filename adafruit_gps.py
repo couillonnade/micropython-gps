@@ -73,6 +73,8 @@ def _parse_float(nmea_data):
 class GPS:
     """GPS parsing module.  Can parse simple NMEA data sentences from serial GPS
     modules to read latitude, longitude, and more.
+
+    :param uart: The `UART` object to use.
     """
     def __init__(self, uart):
         self._uart = uart
