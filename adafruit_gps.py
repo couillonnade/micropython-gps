@@ -53,20 +53,20 @@ def _parse_degrees(nmea_data):
     # Where ddd is the degrees, mm.mmmm is the minutes.
     if nmea_data is None or len(nmea_data) < 3:
         return None
-    raw = float(nmea_data)
+    raw = float(nmea_data.decode())
     deg = raw // 100
     minutes = raw % 100
     return deg + minutes/60
 
 def _parse_int(nmea_data):
-    if nmea_data is None or nmea_data == '':
+    if nmea_data is None or nmea_data == b'':
         return None
     return int(nmea_data)
 
 def _parse_float(nmea_data):
-    if nmea_data is None or nmea_data == '':
+    if nmea_data is None or nmea_data == b'':
         return None
-    return float(nmea_data)
+    return float(nmea_data.decode())
 
 # lint warning about too many attributes disabled
 #pylint: disable-msg=R0902
@@ -103,9 +103,9 @@ class GPS:
             return False
         data_type, args = sentence
         data_type = data_type.upper()
-        if data_type == 'GPGGA':      # GGA, 3d location fix
+        if data_type == b'GPGGA':      # GGA, 3d location fix
             self._parse_gpgga(args)
-        elif data_type == 'GPRMC':    # RMC, minimum location info
+        elif data_type == b'GPRMC':    # RMC, minimum location info
             self._parse_gprmc(args)
         return True
 
@@ -135,21 +135,21 @@ class GPS:
         sentence = self._uart.readline()
         if sentence is None or sentence == b'' or len(sentence) < 1:
             return None
-        sentence = str(sentence, 'ascii').strip()
+        sentence = sentence.strip()
         # Look for a checksum and validate it if present.
-        if len(sentence) > 7 and sentence[-3] == '*':
+        if len(sentence) > 7 and sentence[-3] == ord('*'):
             # Get included checksum, then calculate it and compare.
             expected = int(sentence[-2:], 16)
             actual = 0
             for i in range(1, len(sentence)-3):
-                actual ^= ord(sentence[i])
+                actual ^= sentence[i]
             if actual != expected:
                 return None  # Failed to validate checksum.
             # Remove checksum once validated.
             sentence = sentence[:-3]
         # Parse out the type of sentence (first string after $ up to comma)
         # and then grab the rest as data within the sentence.
-        delineator = sentence.find(',')
+        delineator = sentence.find(b',')
         if delineator == -1:
             return None  # Invalid sentence, no comma after data type.
         data_type = sentence[1:delineator]
@@ -158,7 +158,7 @@ class GPS:
     def _parse_gpgga(self, args):
         # Parse the arguments (everything after data type) for NMEA GPGGA
         # 3D location fix sentence.
-        data = args.split(',')
+        data = args.split(b',')
         if data is None or len(data) != 14:
             return  # Unexpected number of params.
         # Parse fix time.
@@ -177,11 +177,11 @@ class GPS:
         # Parse latitude and longitude.
         self.latitude = _parse_degrees(data[1])
         if self.latitude is not None and \
-           data[2] is not None and data[2].lower() == 's':
+           data[2] is not None and data[2].lower() == b's':
             self.latitude *= -1.0
         self.longitude = _parse_degrees(data[3])
         if self.longitude is not None and \
-           data[4] is not None and data[4].lower() == 'w':
+           data[4] is not None and data[4].lower() == b'w':
             self.longitude *= -1.0
         # Parse out fix quality and other simple numeric values.
         self.fix_quality = _parse_int(data[5])
@@ -193,7 +193,7 @@ class GPS:
     def _parse_gprmc(self, args):
         # Parse the arguments (everything after data type) for NMEA GPRMC
         # minimum location fix sentence.
-        data = args.split(',')
+        data = args.split(b',')
         if data is None or len(data) < 11 or data[0] is None:
             return  # Unexpected number of params.
         # Parse fix time.
@@ -212,16 +212,16 @@ class GPS:
         # Parse status (active/fixed or void).
         status = data[1]
         self.fix_quality = 0
-        if status is not None and status.lower() == 'a':
+        if status is not None and status.lower() == b'a':
             self.fix_quality = 1
         # Parse latitude and longitude.
         self.latitude = _parse_degrees(data[2])
         if self.latitude is not None and \
-           data[3] is not None and data[3].lower() == 's':
+           data[3] is not None and data[3].lower() == b's':
             self.latitude *= -1.0
         self.longitude = _parse_degrees(data[4])
         if self.longitude is not None and \
-           data[5] is not None and data[5].lower() == 'w':
+           data[5] is not None and data[5].lower() == b'w':
             self.longitude *= -1.0
         # Parse out speed and other simple numeric values.
         self.speed_knots = _parse_float(data[6])
