@@ -1,13 +1,13 @@
 # Simple GPS module demonstration.
 # Will wait for a fix and print a message every second with the current location
 # and other details.
-from machine import UART
+from machine import UART, Pin
 import utime as time
 
 import adafruit_gps
 
 # Create a GPS module instance.
-uart = UART(1, baudrate=9600, timeout_chars=3000, pins=('P8','P2'))
+uart = UART(0, baudrate=9600, timeout=10, tx=Pin(0), rx=Pin(1))
 
 # Create a GPS module instance.
 gps = adafruit_gps.GPS(uart)
@@ -46,7 +46,7 @@ while True:
     gps.update()
     # Every second print out current location details if there's a fix.
     current = time.ticks_ms()
-    if time.ticks_diff(last_print, current) >= 1000:
+    if time.ticks_diff(current, last_print) >= 1000:
         last_print = current
 
         if not gps.has_fix:
@@ -80,3 +80,4 @@ while True:
             print('Horizontal dilution: {}'.format(gps.horizontal_dilution))
         if gps.height_geoid is not None:
             print('Height geo ID: {} meters'.format(gps.height_geoid))
+
